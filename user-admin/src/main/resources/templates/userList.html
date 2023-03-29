@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+    <title>用户列表</title>
+    <style>
+        .hide{
+            display: none;
+        }
+        .c1{
+            position: fixed;
+            top:0;
+            bottom: 0;
+            left:0;
+            right: 0;
+            background: rgba(0,0,0,.5);
+            z-index: 2;
+        }
+        .c2{
+            background-color: white;
+            position: fixed;
+            width: 500px;
+            height: 400px;
+            top:50%;
+            left: 50%;
+            z-index: 3;
+            margin-top: -250px;
+            margin-left: -300px;
+        }
+        #modal p {
+            margin-left:80px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1 align="center">用户列表</h1>
+    <div align="left">
+        <button class="btn btn-primary" onclick="back()">返回</button>
+    </div>
+    <div align="right">
+        当前用户:<span id="username" th:text="${username} "></span>
+        <button class="btn btn-primary" id="change-password" th:value="${currentUser.id}" onclick="showPwd(this.value)">修改密码</button>
+    </div>
+</header>
+
+<div id="shade" class="c1 hide"></div>
+
+<div id="change" class="c2 hide" style="overflow: scroll">
+    <table class="table">
+        <tr>
+            <th scope="col">用户id：</th>
+            <td><input type="text" id="userId" readonly = true /></td>
+        </tr>
+        <tr>
+            <th scope="col">用户名：</th>
+            <td><input type="text" id="change-username" readonly = true /></td>
+        </tr>
+        <tr>
+            <th scope="col">性别：</th>
+            <td>
+                <input type="radio" name="sex" value="1" id="sex-man" checked="checked">男
+                <input type="radio" name="sex" value="0" id="sex-woman">女
+            </td>
+        </tr>
+        <tr>
+            <th scope="col">手机号：</th>
+            <td><input type="text" id="phone" /></td>
+        </tr>
+        <tr>
+            <th scope="col">地址：</th>
+            <td><input type="text" id="address" /></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="确定修改" onclick="update()"></td>
+            <td><input type="button" value="取消" onclick="hide()"></td>
+        </tr>
+    </table>
+</div>
+
+<div id="multiChange" class="c2 hide" style="overflow: scroll">
+    <div id="multi">
+
+    </div>
+    <table>
+        <tr>
+            <td><input type="button" value="确定修改" onclick="multiUpdate()"></td>
+            <td><input type="button" value="取消" onclick="hideMulti()"></td>
+        </tr>
+    </table>
+</div>
+
+<div id="changePwd" class="c2 hide" style="overflow: scroll">
+    <table class="table">
+        <tr>
+            <th scope="col">用户id：</th>
+            <td><input type="text" id="changePwd-userId" readonly = true /></td>
+        </tr>
+        <tr>
+            <th scope="col">用户名：</th>
+            <td><input type="text" id="changePwd-username" readonly = true /></td>
+        </tr>
+        <tr>
+            <th scope="col">原密码:</th>
+            <td><input type="password" id="prePassword"></td>
+        </tr>
+        <tr>
+            <th scope="col">密码:</th>
+            <td><input type="password" id="password"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="确定修改" onclick="changePwd()"></td>
+            <td><input type="button" value="取消" onclick="hideChangePwd()"></td>
+        </tr>
+    </table>
+</div>
+
+<table class="table">
+    <thead class="thead-dark">
+        <tr>
+            <td>筛选</td>
+            <td><input type="text" placeholder="用户id" id="search_Id"></td>
+            <td><input type="text" placeholder="用户名" id="search_username"></td>
+            <td>
+                <select id="search_sex">
+                    <option value="2">全部</option>
+                    <option value="1">男</option>
+                    <option value="0">女</option>
+                </select>
+            </td>
+            <td><input type="text" placeholder="手机" id="search_phone"></td>
+            <td><input type="text" placeholder="地址" id="search_address"></td>
+            <td>
+                <button class="btn btn-primary" name="reset" onclick="reset()">重置</button>
+                <button class="btn btn-primary" name="search" onclick="search()">搜索</button>
+                <button class="btn btn-primary" id="multiUpdate" onclick="showMulti()" disabled="disabled">批量修改</button>
+            </td>
+        </tr>
+        <tr>
+            <th scope="col"><input type="checkbox" onclick="checkAll()" id="check_total"></th>
+            <th scope="col">用户id</th>
+            <th scope="col">用户名</th>
+            <th scope="col">性别</th>
+            <th scope="col">手机</th>
+            <th scope="col">地址</th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody id="info">
+    <tr th:each="user : ${userList}">
+        <td><input type="checkbox" th:id="${user.id}" name="checkbox" onclick="check(this.id)"></td>
+        <td><span th:text="${user.id}"></span></td>
+        <td><span th:text="${user.username}"></span></td>
+        <td><span th:text="${user.sex == 1 ? '男':'女'}"></span></td>
+        <td><span th:text="${user.phone}"></span></td>
+        <td><span th:text="${user.address}"></span></td>
+        <td><button class="btn btn-primary" name="userId" th:value="${user.id}" onclick="show(this.value)">修改</button></td>
+    </tr>
+    </tbody>
+</table>
+<script>
+
+    var set = new Set();
+
+    function back(){
+        window.location.href = "http://localhost:8080/";
+    }
+
+    function check(id){
+        var checkState = document.getElementById(id).checked;
+        if(checkState){
+            set.add(id);
+        }else{
+            set.delete(id);
+        }
+        document.getElementById("multiUpdate").disabled = set.size <= 1;
+    }
+
+    function checkAll(){
+        //alert(1);
+        var checkState = document.getElementById("check_total").checked;
+        var check = document.getElementsByName("checkbox");
+        for(var i = 0;i < check.length;i++){
+            check[i].checked = checkState;
+            this.check(check[i].id);
+        }
+    }
+
+    function show(userId){
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/userInfo",
+            data: {userId: userId},
+            success: function(response) {
+                var res = JSON.parse(response);
+                if(res.code === 200){
+                    var user = res.data[0];
+                    var sex = user.sex;
+                    document.getElementById("userId").value=user.id;
+                    document.getElementById("change-username").value=user.username;
+                    if(sex === 1){
+                        document.getElementById("sex-man").checked = true;
+                        document.getElementById("sex-woman").checked = false;
+                    }else{
+                        document.getElementById("sex-man").checked = false;
+                        document.getElementById("sex-woman").checked = true;
+                    }
+                    document.getElementById("phone").value=user.phone;
+                    document.getElementById("address").value=user.address;
+                    document.getElementById('shade').classList.remove('hide');
+                    document.getElementById('change').classList.remove('hide');
+
+                    //user.sex = $("input[name='sex']:checked").val();
+
+                }else{
+                    window.alert(res.msg);
+                }
+
+                //window.alert(res.msg);
+                // 处理成功响应的回调函数
+            },
+            error: function(xhr, status, error) {
+                window.alert("系统异常，登录失败");
+                window.location.href = "http://localhost:8080/";
+                // 处理错误响应的回调函数
+            }
+        });
+
+    }
+
+    function showPwd(userId){
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/userInfo",
+            data: {userId: userId},
+            success: function(response) {
+                var res = JSON.parse(response);
+                if(res.code === 200){
+                    var user = res.data[0];
+                    document.getElementById("changePwd-userId").value=user.id;
+                    document.getElementById("changePwd-username").value=user.username;
+                    document.getElementById('shade').classList.remove('hide');
+                    document.getElementById('changePwd').classList.remove('hide');
+                }else{
+                    window.alert(res.msg);
+                }
+            },
+            error: function(xhr, status, error) {
+                window.alert("系统异常，登录失败");
+                window.location.href = "http://localhost:8080/";
+                // 处理错误响应的回调函数
+            }
+        });
+    }
+
+    function showMulti(){
+        var userIdList = JSON.stringify(Array.from(set));
+        $.ajax({
+            type: "GET",
+            url: "http://localhost:8080/userInfoList",
+            data: {userIdList:userIdList},
+            success: function(response) {
+                var res = JSON.parse(response);
+                if(res.code === 200){
+                    var users = res.data[0];
+                    var str = "";
+                    for (var i = 0; i < users.length; i++) {
+                        if(users[i].sex === 1){
+                            str += "    <table class=\"table\">\n" +
+                                "        <tr>\n" +
+                                "            <th scope=\"col\">用户id：</th>\n" +
+                                "            <td><input type=\"text\" value=" + users[i].id + " readonly = true /></td>\n" +
+                                "        </tr>\n" +
+                                "        <tr>\n" +
+                                "            <th scope=\"col\">用户名：</th>\n" +
+                                "            <td><input type=\"text\" value="+ users[i].username +" readonly = true /></td>\n" +
+                                "        </tr>\n" +
+                                "        <tr>\n" +
+                                "            <th scope=\"col\">性别：</th>\n" +
+                                "            <td>\n" +
+                                "                <input type=\"radio\" id=\"sex-man-"+ users[i].id +"\" name=\"sex\-"+ users[i].id +" value=\"1\" checked='checked'>男\n" +
+                                "                <input type=\"radio\" id=\"sex-woman-"+ users[i].id +"\" name=\"sex\-"+ users[i].id +" value=\"0\">女\n" +
+                                "            </td>\n" +
+                                "        </tr>\n" +
+                                "        <tr>\n" +
+                                "            <th scope=\"col\">手机号：</th>\n" +
+                                "            <td><input type=\"text\" id='phone-"+ users[i].id +"' value="+ users[i].phone +"></td>\n" +
+                                "        </tr>\n" +
+                                "        <tr>\n" +
+                                "            <th scope=\"col\">地址：</th>\n" +
+                                "            <td><input type=\"text\" id='address-"+ users[i].id +"' value="+ users[i].address +"></td>\n" +
+                                "        </tr>\n" +
+                                "    </table>";
+                        }else{
+                            str += "    <table class=\"table\">\n" +
+                                "        <tr>\n" +
+                                "            <th scope=\"col\">用户id：</th>\n" +
+                                "            <td><input type=\"text\" value=" + users[i].id + " readonly = true /></td>\n" +
+                                "        </tr>\n" +
+                                "        <tr>\n" +
+                                "            <th scope=\"col\">用户名：</th>\n" +
+                                "            <td><input type=\"text\" value="+ users[i].username +" readonly = true /></td>\n" +
+                                "        </tr>\n" +
+                                "        <tr>\n" +
+                                "            <th scope=\"col\">性别：</th>\n" +
+                                "            <td>\n" +
+                                "                <input type=\"radio\" id=\"sex-man-"+ users[i].id +"\" name=\"sex-"+ users[i].id +"\" value=\"1\">男\n" +
+                                "                <input type=\"radio\" id=\"sex-woman-"+ users[i].id +"\" name=\"sex-"+ users[i].id +"\" value=\"0\" checked='checked'>女\n" +
+                                "            </td>\n" +
+                                "        </tr>\n" +
+                                "        <tr>\n" +
+                                "            <th scope=\"col\">手机号：</th>\n" +
+                                "            <td><input type=\"text\" id='phone-"+ users[i].id +"' value="+ users[i].phone +"></td>\n" +
+                                "        </tr>\n" +
+                                "        <tr>\n" +
+                                "            <th scope=\"col\">地址：</th>\n" +
+                                "            <td><input type=\"text\" id='address-"+ users[i].id +"' value="+ users[i].address +"></td>\n" +
+                                "        </tr>\n" +
+                                "    </table>";
+                        }
+                    }
+                    $("#multi").html(str);
+                }
+                //处理成功响应的回调函数
+            },
+            error: function(xhr, status, error) {
+                window.alert("系统异常，无法修改");
+                // 处理错误响应的回调函数
+            }
+        });
+
+        document.getElementById('shade').classList.remove('hide');
+        document.getElementById('multiChange').classList.remove('hide');
+    }
+
+    function hide(){
+        document.getElementById('shade').classList.add('hide');
+        document.getElementById('change').classList.add('hide');
+
+    }
+
+    function hideChangePwd(){
+        document.getElementById('shade').classList.add('hide');
+        document.getElementById('changePwd').classList.add('hide');
+
+    }
+
+    function hideMulti(){
+        document.getElementById('shade').classList.add('hide');
+        document.getElementById('multiChange').classList.add('hide');
+
+    }
+
+    function update(){
+        var id = document.getElementById("userId").value;
+        var sex = $("input[name='sex']:checked").val();
+        var phone = document.getElementById("phone").value;
+        var address = document.getElementById("address").value;
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/update",
+            data: {id: id,sex: sex,phone: phone,address: address},
+            success: function(response) {
+                var res = JSON.parse(response);
+                window.alert(res.msg);
+                if(res.code === 200){
+                    location.reload();
+                    hide();
+                }
+                //window.alert(res.msg);
+                // 处理成功响应的回调函数
+            },
+            error: function(xhr, status, error) {
+                window.alert("系统异常，修改失败");
+                //window.location.href = "http://localhost:8080/";
+                // 处理错误响应的回调函数
+            }
+        });
+    }
+
+    function changePwd(){
+        var username = document.getElementById("changePwd-username").value;
+        var prePassword = document.getElementById("prePassword").value;
+        var password = document.getElementById("password").value;
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/changeword",
+            data: {username:username, prePassword: prePassword, password: password},
+            success: function(response) {
+                var res = JSON.parse(response);
+                window.alert(res.msg);
+                if(res.code === 200){
+                    window.location.href = "http://localhost:8080/";
+                }
+                // 处理成功响应的回调函数
+            },
+            error: function(xhr, status, error) {
+                window.alert("系统异常，修改失败");
+                // 处理错误响应的回调函数
+            }
+        });
+    }
+
+    function search(){
+        var id = document.getElementById("search_Id").value;
+        var username = document.getElementById("search_username").value;
+        var sex = document.getElementById("search_sex").value;
+        var phone = document.getElementById("search_phone").value;
+        var address = document.getElementById("search_address").value;
+        var condition = new Object();
+        condition.id = id;
+        condition.username = username;
+        condition.sex = sex;
+        condition.phone = phone;
+        condition.address = address;
+        condition = JSON.stringify(condition);
+        $.ajax({
+            type: "GET",
+            url: "http://localhost:8080/search",
+            data: {condition:condition},
+            success: function(response) {
+                var res = JSON.parse(response);
+                if(res.code === 200){
+                    var users = res.data[0];
+                    var str = "";//把数据组装起来
+                    for (var i = 0; i < users.length; i++) {
+                        var sex = users[i].sex === 1 ? "男":"女";
+                        str += "<tr>" +
+                            "<td>" + "<input type=\"checkbox\" id="+users[i].id+" name=\"checkbox\" onclick='check(this.id)'>" + "</td>" +
+                            "<td>" + users[i].id + "</td>" +
+                            "<td>" + users[i].username + "</td>" +
+                            "<td>" + sex + "</td>" +
+                            "<td>" + users[i].phone + "</td>" +
+                            "<td>" + users[i].address + "</td>" +
+                            "<td>" + "<button class=\"btn btn-primary\" name=\"userId\""+" value=" + users[i].id +" onclick=\"show(this.value)\">修改</button>" + "</td>" +
+                            "</tr>";
+                    }
+                    $("#info").html(str);
+                    //this.hide();
+                    //this.hideMulti();
+                }
+                //处理成功响应的回调函数
+            },
+            error: function(xhr, status, error) {
+                window.alert("系统异常，搜索失败");
+                // 处理错误响应的回调函数
+            }
+        });
+    }
+
+    function reset(){
+        window.location.reload();
+    }
+
+    function multiUpdate(){
+        var users = new Array();
+        for(let id of set.keys()){
+            var user = new Object();
+            user.id = id;
+            // user.sex = $("input[name="+ name +"]:checked").val();
+            user.sex = document.getElementById("sex-man-"+id).checked ? 1 : 0;
+            user.phone = document.getElementById("phone-"+id).value;
+            user.address = document.getElementById("address-"+id).value;
+            users.push(JSON.stringify(user));
+        }
+        var userList = JSON.stringify(Array.from(users));
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/multiUpdate",
+            data: {userList:userList},
+            success: function(response) {
+                var res = JSON.parse(response);
+                window.alert(res.msg);
+                if(res.code === 200){
+                    this.search();
+                    hide();
+                }
+                //window.alert(res.msg);
+                // 处理成功响应的回调函数
+            },
+            error: function(xhr, status, error) {
+                window.alert("系统异常，修改失败");
+                //window.location.href = "http://localhost:8080/";
+                // 处理错误响应的回调函数
+            }
+        });
+    }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>error</title>
+</head>
+
+<table align="center">
+    <tr>
+        <td align="center">
+            系统异常，请重新登陆
+        </td>
+    </tr>
+    <tr>
+        <td align="center">
+            <button id="homeButton" >确定</button>
+        </td>
+    </tr>
+
+</table>
+
+<script>
+    var homeButton = document.getElementById("homeButton");
+    homeButton.addEventListener("click", function() {
+        window.location.href = "http://localhost:8080/";
+    });
+</script>
+
+<body>
+
+</body>
+</html>

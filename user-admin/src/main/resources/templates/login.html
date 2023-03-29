@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+    <meta charset="UTF-8">
+    <title>login</title>
+    <style>
+        .hide{
+            display: none;
+        }
+        .c1{
+            position: fixed;
+            top:0;
+            bottom: 0;
+            left:0;
+            right: 0;
+            background: rgba(0,0,0,.5);
+            z-index: 2;
+        }
+        .c2{
+            background-color: white;
+            position: fixed;
+            width: 500px;
+            height: 400px;
+            top:50%;
+            left: 50%;
+            z-index: 3;
+            margin-top: -250px;
+            margin-left: -300px;
+        }
+        #modal p {
+            margin-left:80px;
+        }
+    </style>
+
+</head>
+<body>
+<table class="c2">
+    <tr>
+        <td>
+            <h1  align="center">欢迎进入用户管理系统</h1>
+        </td>
+    </tr>
+    <tr align="center">
+        <td>
+            <input type="button" onclick="showLogin()" value="登录" class="btn btn-primary btn-lg">
+            <input type="button" onclick="showRegister()" value="注册" class="btn btn-primary btn-lg">
+        </td>
+    </tr>
+</table>
+
+<div id="shade" class="c1 hide"></div>
+
+<div id="login" class="c2 hide">
+    <table class="table">
+        <tr>
+            <th scope="col">用户名：</th>
+            <td><input type="text" id="login-username"/></td>
+        </tr>
+        <tr>
+            <th scope="col">密码：</th>
+            <td><input type="password" id="login-password"/></td>
+        </tr>
+        <tr>
+            <td>
+                <span class="input-group-btn">
+                    <img id="login_captcha_img" alt="验证码" title="点击刷新" onclick="refreshLoginKaptcha()" src="/kaptcha" />
+                </span>
+            </td>
+            <td class="input-group">
+                <input class="form-control" type="text" autocomplete="new-password" placeholder="验证码" required maxlength="4"
+                       id="login-verifyCode">
+            </td>
+        </tr>
+        <tr>
+            <td><input type="button" value="确定" onclick="login()"></td>
+            <td><input type="button" value="取消" onclick="hideLogin()"></td>
+        </tr>
+    </table>
+</div>
+
+<div id="register" class="c2 hide" style="overflow: scroll">
+    <table class="table">
+        <tr>
+            <th scope="col">用户名：</th>
+            <td><input type="text" id="register-username"/></td>
+        </tr>
+        <tr>
+            <th scope="col">密码：</th>
+            <td><input type="password" id="register-password"/></td>
+        </tr>
+        <tr>
+            <th scope="col">性别：</th>
+            <td>
+                <input type="radio" name="sex" value="1" id="sex" checked="checked">男
+                <input type="radio" name="sex" value="0" >女
+            </td>
+        </tr>
+        <tr>
+            <th scope="col">手机号：</th>
+            <td><input type="text" id="phone"/></td>
+        </tr>
+        <tr>
+            <th scope="col">地址：</th>
+            <td><input type="text" id="address"/></td>
+        </tr>
+        <tr>
+            <td>
+                <span class="input-group-btn">
+                    <img id="register_captcha_img" alt="验证码" title="点击刷新" onclick="refreshRegisterKaptcha()" src="/kaptcha" />
+                </span>
+            </td>
+            <td class="input-group">
+                <input class="form-control" type="text" autocomplete="new-password" placeholder="验证码" required maxlength="4"
+                       id="register-verifyCode">
+            </td>
+        </tr>
+        <tr>
+            <td><input type="button" value="确定" onclick="register()"></td>
+            <td><input type="button" value="取消" onclick="hideRegister()"></td>
+        </tr>
+    </table>
+</div>
+
+
+</body>
+</html>
+<script>
+
+    function login() {
+        var username = document.getElementById("login-username").value;
+        var password = document.getElementById("login-password").value;
+        var verifyCode = document.getElementById("login-verifyCode").value;
+        //alert(username+password+verifyCode);
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/login",
+            data: {username: username, password: password,verifyCode: verifyCode},
+            success: function(response) {
+                var res = JSON.parse(response);
+                window.alert(res.msg);
+                if(res.code === 200){
+                    window.location.href = "http://localhost:8080/userList/" + username;
+                }else{
+                    refreshLoginKaptcha();//刷新验证码
+                }
+                // 处理成功响应的回调函数
+            },
+            error: function(xhr, status, error) {
+                window.alert("系统异常，登录失败");
+                window.location.href = "http://localhost:8080/";
+                // 处理错误响应的回调函数
+            }
+        });
+    }
+
+    function register() {
+        var username = document.getElementById("register-username").value;
+        var password = document.getElementById("register-password").value;
+        var sex = $("input[name='sex']:checked").val();
+        var phone = document.getElementById("phone").value;
+        var address = document.getElementById("address").value;
+        var verifyCode = document.getElementById("register-verifyCode").value;
+        //alert(username+password+verifyCode+sex+phone+address);
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/register",
+            data: {username: username, password: password,sex: sex,phone: phone,address: address,verifyCode: verifyCode},
+            types:JSON,
+            success: function(response) {
+                var res = JSON.parse(response);
+                window.alert(res.msg);
+                if(res.code === 200){
+                    window.location.href = "http://localhost:8080/userList/" + username;
+                }else{
+                    refreshRegisterKaptcha();
+                }
+                // 处理成功响应的回调函数
+            },
+            error: function(xhr, status, error) {
+                window.alert("系统异常，注册失败");
+                window.location.href = "http://localhost:8080/";
+                // 处理错误响应的回调函数
+            }
+        });
+    }
+
+    //刷新验证码
+    function refreshLoginKaptcha() {
+        document.getElementById('login_captcha_img').src="/kaptcha?"+ Math.random();
+    }
+
+    function refreshRegisterKaptcha() {
+        document.getElementById('register_captcha_img').src="/kaptcha?"+ Math.random();
+    }
+
+    function showLogin(){
+        document.getElementById('shade').classList.remove('hide');
+        document.getElementById('login').classList.remove('hide');
+    }
+    function showRegister(){
+        document.getElementById('shade').classList.remove('hide');
+        document.getElementById('register').classList.remove('hide');
+    }
+    function hideLogin(){
+        document.getElementById('shade').classList.add('hide');
+        document.getElementById('login').classList.add('hide');
+    }
+    function hideRegister(){
+        document.getElementById('shade').classList.add('hide');
+        document.getElementById('register').classList.add('hide');
+    }
+
+    // function login2() {
+    //     var username = document.getElementById("login-username").value;
+    //     var password = document.getElementById("login-password").value;
+    //     var sex = $("input[name='sex']:checked").val();
+    //     var phone = document.getElementById("phone").value;
+    //     var address = document.getElementById("address").value;
+    //
+    //     alert("username:"+username+";password:"+password+";sex:"+sex+";phone:"+phone+":address"+address);
+    // }
+
+</script>
